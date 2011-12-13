@@ -1,0 +1,134 @@
+<html>
+<head>
+  <title>Persistent Planner</title>
+  <link type="text/css" rel="stylesheet" href="/css/plan.css" />
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+  <script type="text/javascript" src="/nowjs/now.js"></script>
+  <script>
+  var ip; // in progress
+
+  // Doesn't make sense to load a whole new script, just for this...
+
+  /*
+   * JavaScript Pretty Date
+   * Copyright (c) 2011 John Resig (ejohn.org)
+   * Licensed under the MIT and GPL licenses.
+   */
+
+  // Takes an ISO time and returns a string representing how
+  // long ago the date represents.
+  function prettyDate(time){
+    var diff = (Date.now() - time) / 1000,
+        day_diff = Math.floor(diff / 86400);
+    
+    if ( isNaN(day_diff) || day_diff < 0 || day_diff >= 31 )
+      return;
+    
+    return day_diff == 0 && (
+      diff < 60 && "just now" ||
+        diff < 120 && "1 minute ago" ||
+        diff < 3600 && Math.floor( diff / 60 ) + " minutes ago" ||
+        diff < 7200 && "1 hour ago" ||
+        diff < 86400 && Math.floor( diff / 3600 ) + " hours ago") ||
+      day_diff == 1 && "Yesterday" ||
+      day_diff < 7 && day_diff + " days ago" ||
+      day_diff < 31 && Math.ceil( day_diff / 7 ) + " weeks ago";
+  }
+
+  function nextRefresh(time) {
+    var diff = (Date.now() - time) / 1000;
+    var day_diff = Math.floor(diff / 86400);
+    return diff < 3600 ? diff % 60 : diff < 86400 ? diff % 3600 : diff % 86400;
+  }
+
+  function colorClass(diff) {
+    var theClass;
+    if (diff < 600000)  // 10 min
+      theClass = 'short';
+    else if (diff < 3600000) // 1 hr
+      theClass = 'mid';
+    else
+      theClass = 'long';
+    return theClass;
+  }
+
+  function timer(el, time, refresh, index) {
+    setTimeout(function () {
+      var c = $(el.e.find('.time')[index]);
+      c.text(prettyDate(time));
+      if (ip.find(el.e).length) {
+        c.removeClass('short mid long');
+        c.addClass(colorClass(Date.now() - time));
+      }
+      timer(el, time, nextRefresh(time), index);
+    }, refresh*1000);
+  }
+
+  function complete(el, time) {
+    el.e.unbind('dblclick');
+    el.e.remove();
+    el.e.find('.time').removeClass('short mid long');
+    el.e.append('<br/><span class="info">completed <span class="time"></span></span>');
+    el.e.appendTo($('.completed'));
+    timer(el, time, 0, 1);
+  }
+
+  $(document).ready(function () {
+    ip = $('.ip');
+    $('#submit').click(function () {
+      var time = Date.now();
+      now.addTask(time, $('textarea').val());
+      now.receiveTask(time, $('textarea').val(), '0');
+    });
+  });
+
+  now.receiveTask = function (start, task, done) {
+    $('.ip').append('<li><span class="info">Added <span class="time">just now</span></span>:<br/> ' + task + '</li>');
+    var el = {e: $('.ip').children().last()};
+    el.e.dblclick(function () {
+      var bool = confirm('Did you really complete this task?');
+      if (bool) {
+        var time = Date.now();
+        complete(el, time);
+        now.completeTask(start, time);
+      }
+    });
+    timer(el, start, 0, 0);
+    $('textarea').val('');
+    if (done !== '0') {
+      // Force this to execute after the setTimeout in timer executes.
+      setTimeout(function () {
+        complete(el, done);
+      }, 0);
+    }
+  };
+
+  now.ready(function () {
+    now.fetchTasks();
+  });
+
+  </script>
+</head>
+<body>
+  <h3 style="position: relative; left:35%">teh planner</h3>
+  <div id="ip">
+    <h4 align="center">Current</h4>
+    <ul class="ip">
+    </ul>
+  </div>
+  <div id="completed">
+    <h4 align="center">Completed</h4>
+    <ul class="completed">
+    </ul>
+  </div>
+  <p style="clear: left; position: absolute; bottom: 10%; left: 25%">
+  add event:
+  <br />
+  <textarea cols=40 rows=10></textarea>
+  <br />
+  <!-- Does nothing, for now. -->
+  Priority: <input id="timeframe" type="text" />
+  <input id="submit" type="button" value="Add event" />
+  </p>
+</body>
+</html>

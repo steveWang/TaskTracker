@@ -34,21 +34,18 @@ function nextRefresh(time) {
   return diff < 3600 ? diff % 60 : diff < 86400 ? diff % 3600 : diff % 86400;
 }
 
-function timeHue(diff) {
-  return 120 - (diff / (6*3600*1000)) * 120;
+function timeHue(diff, limit) {
+  var alpha = 100;
+  // TODO: Linear, for now. Fix.
+  return 120 - (Math.min(diff, limit) / limit) * 120;
 }
 
 function timeColor(diff) {
-  diff = Math.min(diff, 6*3600*1000); // 6h
-  var alpha = 100;
-  var start = 120;
-  var end = 0;
-  // Start with linear. Swap out later.
-  var hue = timeHue(diff);
-  var chroma = .75;
-  var hprime = hue / 60;
+  const limit = 6*3600*1000;
+  var chroma = .75,
+      hue = timeHue(diff, limit),
+      hprime = hue / 60;
   var x = chroma*(1-Math.abs(hprime%2 - 1));
-  console.log(x, chroma, hprime);
   chroma = Math.round(chroma*256).toString(16);
   x = Math.round(x*256).toString(16);
   if (chroma.length - 2) chroma = '0' + chroma;
@@ -63,7 +60,6 @@ function timer(el, time, refresh, index) {
     c.text(prettyDate(time));
     if (ip.find(el.e).length) {
       var color = timeColor(Date.now() - time);
-      console.log(color);
       c.css('color', color);
     }
     timer(el, time, nextRefresh(time), index);

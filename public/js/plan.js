@@ -94,7 +94,7 @@ function complete(el, time) {
   el.e.remove();
   el.e.find('.time').css('color', '');
   el.e.append('<br/><span class="info">time to complete: ' + diffFormat(time - el.start));
-  el.e.appendTo($('.completed'));
+  el.e.prependTo($('.completed'));
   timer(el, time, 0, 1);
 }
 
@@ -108,8 +108,8 @@ $(document).ready(function () {
 });
 
 now.receiveTask = function (start, task, done) {
-  $('.ip').append('<li><span class="info">Added <span class="time">just now</span></span>:<br/> ' + task + '</li>');
-  var el = {e: $('.ip').children().last(), start: start};
+  $('.ip').prepend('<li><span class="info">Added <span class="time">just now</span></span>:<br/> ' + task + '</li>');
+  var el = {e: $('.ip').children().first(), start: start};
   el.e.dblclick(function () {
     var bool = confirm('Did you really complete this task?');
     if (bool) {

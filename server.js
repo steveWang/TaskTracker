@@ -3,7 +3,7 @@ var app = express.createServer();
 app.use(express.static( __dirname + '/public'));
 var nowjs = require('now');
 var everyone = nowjs.initialize(app);
-app.listen(8080);
+app.listen(process.argv[2] || 8080);
 // load tasks database
 var db = {};
 
